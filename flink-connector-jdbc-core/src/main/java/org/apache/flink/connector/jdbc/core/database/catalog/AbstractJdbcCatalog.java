@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.jdbc.core.database.catalog;
 
+import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.connector.jdbc.core.table.JdbcDynamicTableFactory;
 import org.apache.flink.table.api.Schema;
 import org.apache.flink.table.api.ValidationException;
@@ -87,13 +88,15 @@ import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /** Abstract catalog for any JDBC catalogs. */
+@PublicEvolving
 public abstract class AbstractJdbcCatalog extends AbstractCatalog implements JdbcCatalog {
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractJdbcCatalog.class);
 
+    private final String baseUrl;
+    private final String defaultUrl;
+
     protected final ClassLoader userClassLoader;
-    protected final String baseUrl;
-    protected final String defaultUrl;
     protected final Properties connectionProperties;
 
     @Deprecated
@@ -127,7 +130,7 @@ public abstract class AbstractJdbcCatalog extends AbstractCatalog implements Jdb
 
         this.userClassLoader = userClassLoader;
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-        this.defaultUrl = this.baseUrl + defaultDatabase;
+        this.defaultUrl = getDatabaseUrl(defaultDatabase);
         this.connectionProperties = Preconditions.checkNotNull(connectionProperties);
         checkArgument(
                 !StringUtils.isNullOrWhitespaceOnly(connectionProperties.getProperty(USER_KEY)));
@@ -136,18 +139,23 @@ public abstract class AbstractJdbcCatalog extends AbstractCatalog implements Jdb
                         connectionProperties.getProperty(PASSWORD_KEY)));
     }
 
+    protected String getDatabaseUrl(String databaseName) {
+        return baseUrl + databaseName;
+    }
+
     @Override
     public void open() throws CatalogException {
         // load the Driver use userClassLoader explicitly, see FLINK-15635 for more detail
         try (TemporaryClassLoaderContext ignored =
                 TemporaryClassLoaderContext.of(userClassLoader)) {
             // test connection, fail early if we cannot connect to database
-            try (Connection conn = DriverManager.getConnection(defaultUrl, connectionProperties)) {
+            try (Connection conn =
+                    DriverManager.getConnection(getDefaultUrl(), connectionProperties)) {
             } catch (SQLException e) {
                 throw new ValidationException(
-                        String.format("Failed connecting to %s via JDBC.", defaultUrl), e);
+                        String.format("Failed connecting to %s via JDBC.", getDefaultUrl()), e);
             }
-            LOG.info("Catalog {} established connection to {}", getName(), defaultUrl);
+            LOG.info("Catalog {} established connection to {}", getName(), getDefaultUrl());
         }
     }
 
@@ -168,6 +176,10 @@ public abstract class AbstractJdbcCatalog extends AbstractCatalog implements Jdb
 
     public String getBaseUrl() {
         return baseUrl;
+    }
+
+    public String getDefaultUrl() {
+        return defaultUrl;
     }
 
     // ------ retrieve PK constraint ------
@@ -266,9 +278,9 @@ public abstract class AbstractJdbcCatalog extends AbstractCatalog implements Jdb
         }
 
         String databaseName = tablePath.getDatabaseName();
-        String dbUrl = baseUrl + databaseName;
 
-        try (Connection conn = DriverManager.getConnection(dbUrl, connectionProperties)) {
+        try (Connection conn =
+                DriverManager.getConnection(getDatabaseUrl(databaseName), connectionProperties)) {
             DatabaseMetaData metaData = conn.getMetaData();
             Optional<UniqueConstraint> primaryKey =
                     getPrimaryKey(
@@ -299,17 +311,21 @@ public abstract class AbstractJdbcCatalog extends AbstractCatalog implements Jdb
                     pk -> schemaBuilder.primaryKeyNamed(pk.getName(), pk.getColumns()));
             Schema tableSchema = schemaBuilder.build();
 
-            Map<String, String> props = new HashMap<>();
-            props.put(CONNECTOR.key(), IDENTIFIER);
-            props.put(URL.key(), dbUrl);
-            props.put(USERNAME.key(), connectionProperties.getProperty(USER_KEY));
-            props.put(PASSWORD.key(), connectionProperties.getProperty(PASSWORD_KEY));
-            props.put(TABLE_NAME.key(), getSchemaTableName(tablePath));
-            return CatalogTable.of(tableSchema, null, Lists.newArrayList(), props);
+            return CatalogTable.of(tableSchema, null, Lists.newArrayList(), getOptions(tablePath));
         } catch (Exception e) {
             throw new CatalogException(
                     String.format("Failed getting table %s", tablePath.getFullName()), e);
         }
+    }
+
+    protected Map<String, String> getOptions(ObjectPath tablePath) {
+        Map<String, String> props = new HashMap<>();
+        props.put(CONNECTOR.key(), IDENTIFIER);
+        props.put(URL.key(), getDatabaseUrl(tablePath.getDatabaseName()));
+        props.put(USERNAME.key(), connectionProperties.getProperty(USER_KEY));
+        props.put(PASSWORD.key(), connectionProperties.getProperty(PASSWORD_KEY));
+        props.put(TABLE_NAME.key(), getSchemaTableName(tablePath));
+        return props;
     }
 
     @Override

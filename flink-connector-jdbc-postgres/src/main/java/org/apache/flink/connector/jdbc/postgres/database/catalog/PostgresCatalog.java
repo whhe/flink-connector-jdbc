@@ -142,7 +142,7 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
     public List<String> listDatabases() throws CatalogException {
 
         return extractColumnValuesBySQL(
-                defaultUrl,
+                getDefaultUrl(),
                 "SELECT datname FROM pg_database;",
                 1,
                 dbName -> !builtinDatabases.contains(dbName));
@@ -187,7 +187,7 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
             throw new DatabaseNotExistException(getName(), databaseName);
         }
 
-        final String url = baseUrl + databaseName;
+        final String url = getDatabaseUrl(databaseName);
         try (Connection conn = DriverManager.getConnection(url, connectionProperties)) {
             // get all schemas
             List<String> schemas;

@@ -21,10 +21,13 @@ package org.apache.flink.connector.jdbc.oceanbase.database.dialect;
 import org.apache.flink.connector.jdbc.core.database.dialect.JdbcDialectTest;
 import org.apache.flink.connector.jdbc.oceanbase.OceanBaseOracleTestBase;
 
+import org.junit.jupiter.api.Disabled;
+
 import java.util.Arrays;
 import java.util.List;
 
 /** The OceanBase Oracle mode params for {@link JdbcDialectTest}. */
+@Disabled("OceanBase Oracle mode can only be tested locally.")
 class OceanBaseOracleDialectTest extends JdbcDialectTest implements OceanBaseOracleTestBase {
 
     public OceanBaseOracleDialectTest() {
