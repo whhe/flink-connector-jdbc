@@ -44,8 +44,8 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
 
     private static final OceanBaseContainer CONTAINER =
             new OceanBaseContainer(OCEANBASE_CE_4)
-                    .withEnv("MODE", "mini")
-                    .withEnv("OB_DATAFILE_SIZE", "2G")
+                    .withEnv("MODE", "slim")
+                    .withEnv("OB_DATAFILE_SIZE", "4G")
                     .withEnv("OB_LOG_DISK_SIZE", "4G")
                     .withPassword("123456")
                     .withUrlParam("useSSL", "false")
