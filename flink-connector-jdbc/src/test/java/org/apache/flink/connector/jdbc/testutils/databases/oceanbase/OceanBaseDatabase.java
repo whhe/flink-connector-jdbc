@@ -24,6 +24,7 @@ import org.apache.flink.util.FlinkRuntimeException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.builder.Transferable;
@@ -38,12 +39,14 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
 
     private static final Logger LOG = LoggerFactory.getLogger(OceanBaseDatabase.class);
 
+    private static final Network NETWORK = Network.newNetwork();
     private static final String ZONE_OFFSET =
             DateTimeFormatter.ofPattern("xxx")
                     .format(ZoneId.systemDefault().getRules().getOffset(Instant.now()));
 
     private static final OceanBaseContainer CONTAINER =
             new OceanBaseContainer(OCEANBASE_CE_4)
+                    .withNetwork(NETWORK)
                     .withEnv("MODE", "slim")
                     .withPassword("123456")
                     .withUrlParam("useSSL", "false")
