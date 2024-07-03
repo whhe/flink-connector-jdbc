@@ -74,7 +74,7 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
     @Override
     protected DatabaseMetadata startDatabase() throws Exception {
         CONTAINER.start();
-        try (Connection connection = CONTAINER.createConnection("");
+        try (Connection connection = getMetadata().getConnection();
                 Statement statement = connection.createStatement()) {
             statement.execute(String.format("SET GLOBAL time_zone = '%s'", ZONE_OFFSET));
         }
