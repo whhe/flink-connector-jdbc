@@ -27,7 +27,6 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.images.builder.Transferable;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -44,7 +43,7 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
     private static final OceanBaseContainer CONTAINER =
             new OceanBaseContainer(OCEANBASE_CE_4)
                     .withEnv("MODE", "slim")
-                    .withEnv("OB_DATAFILE_SIZE", "4G")
+                    .withEnv("OB_DATAFILE_SIZE", "2G")
                     .withEnv("OB_LOG_DISK_SIZE", "4G")
                     .withPassword("123456")
                     .withUrlParam("useSSL", "false")
@@ -53,7 +52,6 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
                             Transferable.of(
                                     String.format("SET GLOBAL time_zone = '%s';", ZONE_OFFSET)),
                             "/root/boot/init.d/init.sql")
-                    .withStartupTimeout(Duration.ofMinutes(4))
                     .withLogConsumer(new Slf4jLogConsumer(LOG));
 
     private static OceanBaseMetadata metadata;
