@@ -27,9 +27,8 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.images.builder.Transferable;
 
-import java.sql.Connection;
-import java.sql.Statement;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -47,12 +46,16 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
 
     private static final OceanBaseContainer CONTAINER =
             new OceanBaseContainer(OCEANBASE_CE_4)
-                    .withNetwork(NETWORK)
                     .withEnv("MODE", "slim")
-                    .withEnv("OB_DATAFILE_SIZE", "2G")
+                    .withEnv("OB_DATAFILE_SIZE", "1G")
                     .withEnv("OB_LOG_DISK_SIZE", "4G")
+                    .withPassword("123456")
                     .withUrlParam("useSSL", "false")
                     .withUrlParam("serverTimezone", ZONE_OFFSET)
+                    .withCopyToContainer(
+                            Transferable.of(
+                                    String.format("SET GLOBAL time_zone = '%s';", ZONE_OFFSET)),
+                            "/root/boot/init.d/init.sql")
                     .waitingFor(Wait.forLogMessage(".*boot success!.*", 1))
                     .withStartupTimeout(Duration.ofMinutes(2))
                     .withLogConsumer(new Slf4jLogConsumer(LOG));
@@ -78,10 +81,6 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
     @Override
     protected DatabaseMetadata startDatabase() throws Exception {
         CONTAINER.start();
-        try (Connection connection = getMetadata().getConnection();
-                Statement statement = connection.createStatement()) {
-            statement.execute(String.format("SET GLOBAL time_zone = '%s'", ZONE_OFFSET));
-        }
         return getMetadata();
     }
 
