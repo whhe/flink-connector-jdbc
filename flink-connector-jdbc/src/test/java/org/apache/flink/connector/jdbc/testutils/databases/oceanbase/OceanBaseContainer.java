@@ -19,10 +19,8 @@
 package org.apache.flink.connector.jdbc.testutils.databases.oceanbase;
 
 import org.testcontainers.containers.JdbcDatabaseContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.containers.wait.strategy.WaitStrategy;
 import org.testcontainers.utility.DockerImageName;
-
-import java.time.Duration;
 
 /** {@link JdbcDatabaseContainer} for OceanBase. */
 public class OceanBaseContainer extends JdbcDatabaseContainer<OceanBaseContainer> {
@@ -50,9 +48,10 @@ public class OceanBaseContainer extends JdbcDatabaseContainer<OceanBaseContainer
     }
 
     protected void waitUntilContainerStarted() {
-        Wait.forLogMessage(".*boot success!.*", 1)
-                .withStartupTimeout(Duration.ofMinutes(2))
-                .waitUntilReady(this);
+        WaitStrategy waitStrategy = getWaitStrategy();
+        if (waitStrategy != null) {
+            waitStrategy.waitUntilReady(this);
+        }
         super.waitUntilContainerStarted();
     }
 
