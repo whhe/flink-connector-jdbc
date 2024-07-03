@@ -51,7 +51,7 @@ public class OceanBaseDatabase extends DatabaseExtension implements OceanBaseIma
                     .withUrlParam("serverTimezone", ZONE_OFFSET)
                     .withCopyToContainer(
                             Transferable.of(
-                                    String.format("SET GLOBAL time_zone = '%s'", ZONE_OFFSET)),
+                                    String.format("SET GLOBAL time_zone = '%s';", ZONE_OFFSET)),
                             "/root/boot/init.d/init.sql")
                     .withStartupTimeout(Duration.ofMinutes(4))
                     .withLogConsumer(new Slf4jLogConsumer(LOG));

@@ -38,7 +38,6 @@ public class OceanBaseContainer extends JdbcDatabaseContainer<OceanBaseContainer
         super(dockerImageName);
 
         addExposedPort(SQL_PORT);
-        setWaitStrategy(Wait.forLogMessage(".*boot success!.*", 1));
     }
 
     @Override
@@ -49,7 +48,8 @@ public class OceanBaseContainer extends JdbcDatabaseContainer<OceanBaseContainer
     }
 
     protected void waitUntilContainerStarted() {
-        this.getWaitStrategy().waitUntilReady(this);
+        Wait.forLogMessage(".*boot success!.*", 1).waitUntilReady(this);
+        super.waitUntilContainerStarted();
     }
 
     @Override
