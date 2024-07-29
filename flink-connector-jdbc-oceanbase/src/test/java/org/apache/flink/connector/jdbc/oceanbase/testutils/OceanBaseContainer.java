@@ -21,6 +21,8 @@ package org.apache.flink.connector.jdbc.oceanbase.testutils;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
+import java.time.Duration;
+
 /**
  * JdbcDatabaseContainer for latest Docker images, can be removed after testcontainers 1.20.1 is
  * released.
@@ -49,7 +51,9 @@ public class OceanBaseContainer extends org.testcontainers.oceanbase.OceanBaseCE
         dockerImageName.assertCompatibleWith(DEFAULT_IMAGE_NAME);
 
         addExposedPorts(SQL_PORT, RPC_PORT);
-        setWaitStrategy(Wait.forLogMessage(".*boot success!.*", 1));
+        setWaitStrategy(
+                Wait.forLogMessage(".*boot success!.*", 1)
+                        .withStartupTimeout(Duration.ofMinutes(2)));
     }
 
     @Override
